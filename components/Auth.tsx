@@ -1,15 +1,20 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthMode } from '../types';
 
 interface AuthProps {
   onLogin: (email: string) => void;
+  initialMode?: AuthMode;
 }
 
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
-  const [mode, setMode] = useState<AuthMode>('login');
+const Auth: React.FC<AuthProps> = ({ onLogin, initialMode = 'login' }) => {
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,12 +25,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#020617] relative overflow-hidden p-6">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 blur-[120px] rounded-full"></div>
-
-      <div className="w-full max-w-md glass-panel p-10 rounded-3xl z-10 animate-fade-in shadow-2xl">
+    <div className="w-full flex items-center justify-center relative">
+      <div className="w-full glass-panel p-10 rounded-3xl z-10 animate-fade-in shadow-2xl bg-slate-900/90">
         <div className="flex flex-col items-center mb-10">
           <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mb-4 teal-glow">
             <i className="fas fa-shield-halved text-white text-3xl"></i>

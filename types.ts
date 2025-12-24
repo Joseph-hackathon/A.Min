@@ -31,7 +31,8 @@ export enum Page {
   Dashboard = 'dashboard',
   Scanner = 'scanner',
   Visualizer = 'visualizer',
-  Report = 'report'
+  Report = 'report',
+  Overview = 'overview'
 }
 
 export type AuthMode = 'login' | 'signup';
