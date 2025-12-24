@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AuthMode } from '../types';
+import Logo from './Logo';
 
 interface AuthProps {
   onLogin: (email: string) => void;
@@ -65,9 +66,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, initialMode = 'login' }) => {
     <div className="w-full flex items-center justify-center relative">
       <div className="w-full glass-panel p-10 rounded-3xl z-10 animate-fade-in shadow-2xl bg-slate-900/90 border-slate-700/50">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-teal-500 rounded-2xl flex items-center justify-center mb-4 teal-glow shadow-inner">
-            <i className="fas fa-shield-halved text-white text-3xl"></i>
-          </div>
+          <Logo size="lg" className="mb-4" />
           <h1 className="text-3xl font-black tracking-tighter text-white">A.min</h1>
           <p className="text-teal-400 text-[10px] font-black tracking-[0.3em] uppercase mt-1">Advanced Security Protocol</p>
         </div>

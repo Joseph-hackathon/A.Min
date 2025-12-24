@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getSecurityAnalysis } from '../services/gemini';
+import Logo from './Logo';
 
 const Report: React.FC = () => {
   const [analysis, setAnalysis] = useState<string>("");
@@ -26,9 +27,7 @@ const Report: React.FC = () => {
       <header className="mb-10 flex justify-between items-end border-b border-slate-800 pb-6">
         <div>
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-teal-500 rounded flex items-center justify-center text-white">
-              <i className="fas fa-shield-halved text-sm"></i>
-            </div>
+            <Logo size="sm" />
             <span className="text-[10px] text-teal-400 font-mono font-black uppercase tracking-[0.2em]">A.min Security Protocol</span>
           </div>
           <h2 className="text-4xl font-black text-white mb-1 tracking-tight">Intelligent Security Forensics</h2>

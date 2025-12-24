@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Page } from '../types';
+import Logo from './Logo';
 
 interface SidebarProps {
   activePage: Page;
@@ -23,11 +24,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout, 
       ];
 
   return (
-    <div className="w-64 glass-panel border-r border-slate-700 h-screen sticky top-0 flex flex-col p-6">
+    <div className="w-64 glass-panel border-r border-slate-700 h-screen sticky top-0 flex flex-col p-6 no-print">
       <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer" onClick={() => setActivePage(Page.Overview)}>
-        <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center teal-glow">
-          <i className="fas fa-shield-halved text-white text-xl"></i>
-        </div>
+        <Logo size="md" />
         <div>
           <h1 className="font-bold text-lg tracking-tight">A.min</h1>
           <p className="text-[10px] text-teal-400 font-mono uppercase tracking-widest">Security System</p>

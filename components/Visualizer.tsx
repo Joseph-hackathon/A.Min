@@ -13,9 +13,9 @@ const Visualizer: React.FC = () => {
   const [activeTab, setActiveTab] = useState('Compact');
   const [selectedPoint, setSelectedPoint] = useState<DataPoint | null>(null);
   
-  // Camera/Zoom domains
-  const [xDomain, setXDomain] = useState<[number, number]>([0, 100]);
-  const [yDomain, setYDomain] = useState<[number, number]>([0, 100]);
+  // Dynamic Domains for Zooming
+  const [xDomain, setXDomain] = useState<[number, number] | undefined>(undefined);
+  const [yDomain, setYDomain] = useState<[number, number] | undefined>(undefined);
 
   const generateData = useMemo(() => {
     const points: DataPoint[] = [];
@@ -56,35 +56,39 @@ const Visualizer: React.FC = () => {
   const normalPct = ((normalPoints.length / totalCount) * 100).toFixed(1);
   const adversarialPct = ((adversarialPoints.length / totalCount) * 100).toFixed(1);
 
-  const handlePointClick = (data: DataPoint) => {
-    setSelectedPoint(data);
-    // Smoothly animate zoom: focus on a 30x30 window around the point
-    setXDomain([data.x - 15, data.x + 15]);
-    setYDomain([data.y - 15, data.y + 15]);
+  const handlePointClick = (data: any) => {
+    // Recharts Scatter onClick can pass a wrapper or the raw data depending on context
+    const point = data?.payload || data;
+    if (!point || !point.id) return;
+    
+    setSelectedPoint(point);
+    // Focus on a window around the point. Using a 40-unit spread for safety.
+    setXDomain([point.x - 20, point.x + 20]);
+    setYDomain([point.y - 20, point.y + 20]);
   };
 
   const resetZoom = () => {
     setSelectedPoint(null);
-    setXDomain([0, 100]);
-    setYDomain([0, 100]);
+    setXDomain(undefined);
+    setYDomain(undefined);
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload as DataPoint;
       return (
-        <div className="glass-panel p-4 rounded-xl border-slate-700 shadow-2xl pointer-events-none min-w-[160px] animate-fade-in">
+        <div className="glass-panel p-4 rounded-xl border-slate-700 shadow-2xl pointer-events-none min-w-[160px] animate-fade-in relative z-50">
           <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Point Signature</p>
           <p className="text-xs font-mono text-white mb-3 border-b border-slate-800 pb-2">{data.id}</p>
           
-          <div className="space-y-1.5 mb-3">
+          <div className="space-y-1.5 mb-3 text-xs">
             <div className="flex justify-between items-center gap-4">
-              <span className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Source</span>
-              <span className="text-[10px] text-slate-300 font-semibold">{data.source}</span>
+              <span className="text-slate-500 uppercase font-bold tracking-tighter">Source</span>
+              <span className="text-slate-300 font-semibold">{data.source}</span>
             </div>
             <div className="flex justify-between items-center gap-4">
-              <span className="text-[9px] text-slate-500 uppercase font-bold tracking-tighter">Destination</span>
-              <span className="text-[10px] text-slate-300 font-semibold">{data.destination}</span>
+              <span className="text-slate-500 uppercase font-bold tracking-tighter">Destination</span>
+              <span className="text-slate-300 font-semibold">{data.destination}</span>
             </div>
           </div>
 
@@ -113,15 +117,11 @@ const Visualizer: React.FC = () => {
             <th className="px-4 py-4 font-bold uppercase tracking-wider">Dest</th>
             <th className="px-4 py-4 font-bold uppercase tracking-wider">Route</th>
             <th className="px-4 py-4 font-bold uppercase tracking-wider">Departure</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Arrival</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Duration</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Stops</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Info</th>
             <th className="px-4 py-4 font-bold uppercase tracking-wider text-right">Status</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800/50">
-          {[...adversarialPoints.slice(0, 8), ...generateData.filter(p => p.type === 'normal').slice(0, 20)].map((item, idx) => (
+          {[...adversarialPoints.slice(0, 8), ...normalPoints.slice(0, 15)].map((item, idx) => (
             <tr 
               key={item.id} 
               onClick={() => handlePointClick(item)}
@@ -138,10 +138,6 @@ const Visualizer: React.FC = () => {
               <td className="px-4 py-3 text-slate-400">{item.destination}</td>
               <td className="px-4 py-3 text-slate-500 font-mono text-[10px]">{item.route}</td>
               <td className="px-4 py-3 text-slate-400">{item.depTime}</td>
-              <td className="px-4 py-3 text-slate-400">{item.arrivalTime}</td>
-              <td className="px-4 py-3 text-slate-400">{item.duration}</td>
-              <td className="px-4 py-3 text-slate-400">{item.stops}</td>
-              <td className="px-4 py-3 text-slate-500 text-[10px] italic">{item.additionalInfo}</td>
               <td className="px-4 py-3 text-right">
                 {item.type === 'adversarial' ? 
                   <span className="text-rose-500 font-bold text-[11px] tracking-tight flex items-center justify-end gap-1.5 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]">
@@ -159,72 +155,6 @@ const Visualizer: React.FC = () => {
     </div>
   );
 
-  const renderColumnView = () => {
-    const columns = [
-      { name: 'Airline', icon: 'fa-plane', desc: 'Name of the airline operating the flight', top: [{n:'Jet Airways', p:'36%'}, {n:'IndiGo', p:'19%'}, {n:'Other', p:'45%'}] },
-      { name: 'Date_of_Journey', icon: 'fa-calendar-alt', desc: 'Travel date', top: [{n:'18/05/2019', p:'5%'}, {n:'6/06/2019', p:'5%'}, {n:'Other', p:'90%'}] },
-      { name: 'Source', icon: 'fa-globe', desc: 'Departure city', top: [{n:'Delhi', p:'42%'}, {n:'Kolkata', p:'27%'}, {n:'Other', p:'31%'}] },
-      { name: 'Destination', icon: 'fa-map-marker-alt', desc: 'Arrival city', top: [{n:'Cochin', p:'42%'}, {n:'Banglore', p:'27%'}, {n:'Other', p:'31%'}] },
-    ];
-
-    return (
-      <div className="space-y-12">
-        {columns.map((col, idx) => (
-          <div key={idx} className="border-b border-slate-800 pb-8 last:border-0">
-            <div className="flex items-center gap-2 mb-4">
-              <i className={`fas ${col.icon} text-teal-400`}></i>
-              <h5 className="font-bold text-slate-200">{col.name}</h5>
-            </div>
-            <p className="text-[11px] text-slate-500 mb-6 flex items-center gap-2">
-              <i className="fas fa-info-circle"></i> {col.desc}
-            </p>
-            
-            <div className="flex flex-col lg:flex-row gap-12">
-              <div className="w-full lg:w-1/3 space-y-3">
-                {col.top.map((t, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="text-slate-400">{t.n}</span>
-                    <span className="font-mono text-teal-400">{t.p}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex-1 space-y-4">
-                <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden flex">
-                  <div className="h-full bg-emerald-500 w-full"></div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-[10px] uppercase font-bold tracking-widest">
-                  <div>
-                    <p className="text-slate-500 mb-1">Valid <span className="w-2 h-2 inline-block bg-emerald-500 rounded-sm ml-1"></span></p>
-                    <p className="text-slate-200 text-xs">10.7k <span className="text-slate-500 font-normal">100%</span></p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 mb-1">Mismatched <span className="w-2 h-2 inline-block bg-slate-600 rounded-sm ml-1"></span></p>
-                    <p className="text-slate-200 text-xs">0 <span className="text-slate-500 font-normal">0%</span></p>
-                  </div>
-                  <div>
-                    <p className="text-slate-500 mb-1">Missing <span className="w-2 h-2 inline-block bg-rose-500 rounded-sm ml-1"></span></p>
-                    <p className="text-slate-200 text-xs">0 <span className="text-slate-500 font-normal">0%</span></p>
-                  </div>
-                  <div>
-                    <div className="flex justify-between items-center border-b border-slate-800 pb-1 mb-1">
-                      <span className="text-slate-500">Unique</span>
-                      <span className="text-slate-200">12</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500">Most Common</span>
-                      <span className="text-slate-200">{col.top[0].n}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
       <header className="mb-6">
@@ -239,9 +169,9 @@ const Visualizer: React.FC = () => {
           {selectedPoint && (
             <button 
               onClick={resetZoom}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all border border-slate-700 flex items-center gap-2"
+              className="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all border border-teal-500/30 flex items-center gap-2 shadow-lg shadow-teal-500/20"
             >
-              <i className="fas fa-compress-arrows-alt"></i> Reset View
+              <i className="fas fa-compress-arrows-alt"></i> Reset Viewport
             </button>
           )}
         </div>
@@ -283,10 +213,7 @@ const Visualizer: React.FC = () => {
                   <span className="text-lg font-mono font-bold text-white">{normalPct}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-teal-500 transition-all duration-500 ease-out" 
-                    style={{ width: `${normalPct}%` }}
-                  ></div>
+                  <div className="h-full bg-teal-500 transition-all duration-500 ease-out" style={{ width: `${normalPct}%` }}></div>
                 </div>
               </div>
 
@@ -296,76 +223,58 @@ const Visualizer: React.FC = () => {
                   <span className="text-lg font-mono font-bold text-white">{adversarialPct}%</span>
                 </div>
                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-rose-500 transition-all duration-500 ease-out" 
-                    style={{ width: `${adversarialPct}%` }}
-                  ></div>
+                  <div className="h-full bg-rose-500 transition-all duration-500 ease-out" style={{ width: `${adversarialPct}%` }}></div>
                 </div>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-slate-700/50">
-              <div className="flex justify-between text-[10px] text-slate-500 uppercase font-bold">
-                <span>Total Samples</span>
-                <span className="text-slate-300">{totalCount}</span>
               </div>
             </div>
           </div>
         </div>
 
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-3 glass-panel p-8 rounded-2xl h-[450px] flex flex-col shadow-2xl relative overflow-hidden">
-            <div className="flex-1 w-full">
+          <div className="md:col-span-3 glass-panel p-8 rounded-2xl h-[450px] flex flex-col shadow-2xl relative overflow-hidden bg-slate-900/60">
+            <div className="flex-1 w-full relative z-10">
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart 
-                  margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                >
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                   <XAxis 
                     type="number" 
                     dataKey="x" 
-                    name="Price Feature" 
+                    name="X-Feature" 
                     stroke="#475569" 
                     fontSize={10} 
-                    hide 
-                    domain={xDomain} 
-                    allowDataOverflow 
+                    domain={xDomain || [0, 100]} 
                   />
                   <YAxis 
                     type="number" 
                     dataKey="y" 
-                    name="Duration Feature" 
+                    name="Y-Feature" 
                     stroke="#475569" 
                     fontSize={10} 
-                    hide 
-                    domain={yDomain} 
-                    allowDataOverflow 
+                    domain={yDomain || [0, 100]}
                   />
-                  <ZAxis type="number" dataKey="z" range={[50, 250]} />
+                  <ZAxis type="number" dataKey="z" range={[60, 300]} />
                   <Tooltip content={<CustomTooltip />} />
                   <Scatter 
                     name="Data Points" 
                     data={generateData} 
-                    onClick={(data) => handlePointClick(data)}
+                    onClick={handlePointClick}
                     cursor="pointer"
-                    animationDuration={800}
-                    animationEasing="ease-in-out"
                   >
                     {generateData.map((entry, index) => (
                       <Cell 
-                        key={`cell-${index}`} 
+                        key={`${entry.id}-${index}`} 
                         fill={entry.type === 'normal' ? '#14b8a6' : '#f43f5e'} 
-                        strokeWidth={selectedPoint?.id === entry.id ? 3 : (entry.type === 'adversarial' ? 1 : 0)} 
-                        stroke={selectedPoint?.id === entry.id ? '#ffffff' : '#fb7185'}
-                        opacity={selectedPoint ? (selectedPoint.id === entry.id ? 1 : 0.3) : 0.8}
-                        className="transition-all duration-500"
+                        strokeWidth={selectedPoint?.id === entry.id ? 2 : 0} 
+                        stroke="#ffffff"
+                        fillOpacity={selectedPoint ? (selectedPoint.id === entry.id ? 1 : 0.2) : 0.7}
+                        className="transition-all duration-300"
                       />
                     ))}
                   </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
-            <div className="absolute bottom-4 left-4 flex gap-4">
+            <div className="absolute bottom-4 left-4 flex gap-4 z-20">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-teal-500"></div>
                 <span className="text-[10px] text-slate-500 uppercase font-bold">Normal</span>
@@ -416,10 +325,6 @@ const Visualizer: React.FC = () => {
                     <span className="text-slate-500 font-bold uppercase">Departure</span>
                     <span className="text-slate-300 font-mono">{selectedPoint.depTime}</span>
                   </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-500 font-bold uppercase">Stops</span>
-                    <span className="text-slate-300">{selectedPoint.stops}</span>
-                  </div>
                 </div>
 
                 <div className={`mt-auto p-3 rounded-xl border ${
@@ -433,8 +338,8 @@ const Visualizer: React.FC = () => {
                   </div>
                   <p className="text-[9px] leading-relaxed text-slate-400">
                     {selectedPoint.type === 'adversarial' 
-                      ? 'Detected as out-of-distribution with high variance. Recommendation: Quarantine and flag for further review.'
-                      : 'Verified as within safe clustering bounds. No immediate threat signature found.'
+                      ? 'Detected as out-of-distribution. Recommendation: Quarantine and flag.'
+                      : 'Verified as within safe bounds.'
                     }
                   </p>
                 </div>
@@ -443,13 +348,13 @@ const Visualizer: React.FC = () => {
                   onClick={resetZoom}
                   className="w-full py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors border-t border-slate-700/50 mt-4"
                 >
-                  Clear Selection & Reset
+                  Clear Selection
                 </button>
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-3">
                 <i className="fas fa-mouse-pointer text-2xl opacity-20"></i>
-                <p className="text-xs leading-relaxed">Select a data point on the map to view detailed forensics and metadata with interactive zoom.</p>
+                <p className="text-xs leading-relaxed">Select a data point to view forensics and detailed metadata.</p>
               </div>
             )}
           </div>
@@ -464,7 +369,7 @@ const Visualizer: React.FC = () => {
                 <i className="fas fa-file-csv text-xl"></i>
               </div>
               <div>
-                <h3 className="font-bold text-white tracking-tight">IndianFlightData - Sheet1.csv <span className="text-slate-500 font-normal text-sm">(1.11 MB)</span></h3>
+                <h3 className="font-bold text-white tracking-tight">IndianFlightData - Sheet1.csv</h3>
                 <div className="flex gap-4 mt-1">
                   <span className="text-[10px] text-slate-500 uppercase flex items-center gap-1"><i className="fas fa-calendar"></i> May 2019</span>
                   <span className="text-[10px] text-slate-500 uppercase flex items-center gap-1"><i className="fas fa-table"></i> 11 Columns</span>
@@ -474,7 +379,7 @@ const Visualizer: React.FC = () => {
           </div>
           
           <div className="flex gap-8">
-            {['Detail', 'Compact', 'Column'].map(tab => (
+            {['Compact', 'Column'].map(tab => (
               <button 
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -487,50 +392,13 @@ const Visualizer: React.FC = () => {
         </div>
 
         <div className="p-8 bg-[#0f172a]/40">
-          {activeTab === 'Detail' && (
-            <div className="space-y-6">
-              <div className="p-6 bg-slate-800/20 rounded-2xl border border-slate-700/30">
-                <h4 className="font-bold text-white mb-4 flex items-center gap-2">
-                  <i className="fas fa-info-circle text-teal-400"></i> About This File
-                </h4>
-                <p className="text-sm text-slate-400 leading-relaxed">
-                  This CSV file contains <span className="text-slate-200 font-bold">Indian domestic flight data</span> collected to analyze and predict <span className="text-slate-200 font-bold">flight ticket prices</span>. 
-                  Each record represents a single journey, including airline details, route, duration, number of stops, and final fare.
-                </p>
-                <p className="mt-4 text-sm text-slate-400">
-                  Suitable for <span className="text-teal-500 font-semibold">regression modeling, feature engineering</span>, and <span className="text-teal-500 font-semibold">machine learning projects</span>.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Top Airline</p>
-                  <p className="text-sm font-bold text-white">Jet Airways <span className="text-teal-400 text-xs font-normal">36%</span></p>
-                </div>
-                <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Peak Route</p>
-                  <p className="text-sm font-bold text-white">DEL → COK <span className="text-teal-400 text-xs font-normal">22%</span></p>
-                </div>
-                <div className="bg-slate-800/40 p-4 rounded-xl border border-slate-700/30">
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Avg Duration</p>
-                  <p className="text-sm font-bold text-white">5h 25m</p>
-                </div>
-                <div className="bg-rose-500/10 p-4 rounded-xl border border-rose-500/20">
-                  <p className="text-[10px] text-rose-400 uppercase font-bold mb-1">Anomaly Flags</p>
-                  <p className="text-sm font-bold text-rose-400">{noiseLevel} Detected</p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {activeTab === 'Compact' && renderCompactView()}
-
-          {activeTab === 'Column' && renderColumnView()}
           
           <div className="mt-8 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest px-2">
-            <span>Showing analyzed records from {generateData.length} total samples</span>
+            <span>Analyzed {generateData.length} records</span>
             <div className="flex gap-4">
-              <button className="hover:text-white transition-colors">Previous Page</button>
-              <button className="hover:text-white transition-colors">Next Page</button>
+              <button className="hover:text-white transition-colors">Previous</button>
+              <button className="hover:text-white transition-colors">Next</button>
             </div>
           </div>
         </div>
