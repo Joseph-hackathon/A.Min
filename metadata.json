@@ -1,0 +1,5 @@
+{
+  "name": "A.min Adversarial Shield",
+  "description": "A comprehensive solution for detecting adversarial attacks on AI training data. A.min Labs provides pre-training data verification, anomaly detection, and clustering analysis to ensure AI model integrity.",
+  "requestFramePermissions": []
+}
