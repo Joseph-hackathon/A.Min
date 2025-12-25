@@ -1,70 +1,53 @@
 
 import React, { useState, useMemo } from 'react';
-import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Label } from 'recharts';
 import { DataPoint } from '../types';
 
-const airlines = ['Jet Airways', 'IndiGo', 'Air India', 'SpiceJet', 'Multiple carriers'];
-const sources = ['Delhi', 'Kolkata', 'Banglore', 'Mumbai', 'Chennai'];
-const destinations = ['Cochin', 'Banglore', 'Delhi', 'New Delhi', 'Hyderabad'];
+interface VisualizerProps {
+  scanData?: DataPoint[];
+  fileName?: string;
+}
 
-const Visualizer: React.FC = () => {
-  const [pointCount, setPointCount] = useState(150);
-  const [noiseLevel, setNoiseLevel] = useState(15);
-  const [activeTab, setActiveTab] = useState('Compact');
+const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
   const [selectedPoint, setSelectedPoint] = useState<DataPoint | null>(null);
+  const [activeTab, setActiveTab] = useState<'compact' | 'column'>('compact');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
-  // Dynamic Domains for Zooming
   const [xDomain, setXDomain] = useState<[number, number] | undefined>(undefined);
   const [yDomain, setYDomain] = useState<[number, number] | undefined>(undefined);
 
-  const generateData = useMemo(() => {
+  const displayData = useMemo(() => {
+    if (scanData && scanData.length > 0) return scanData;
+    
     const points: DataPoint[] = [];
-    
-    const createPoint = (type: 'normal' | 'adversarial', xRange: [number, number], yRange: [number, number]) => {
-      const airline = airlines[Math.floor(Math.random() * airlines.length)];
-      const src = sources[Math.floor(Math.random() * sources.length)];
-      const dest = destinations[Math.floor(Math.random() * destinations.length)];
-      
-      return {
-        id: Math.random().toString(36).substr(2, 9).toUpperCase(),
-        x: xRange[0] + Math.random() * (xRange[1] - xRange[0]),
-        y: yRange[0] + Math.random() * (yRange[1] - yRange[0]),
-        type,
-        airline,
-        dateOfJourney: `${Math.floor(Math.random() * 28 + 1)}/05/2019`,
-        source: src,
-        destination: dest,
-        route: `${src.substr(0, 3).toUpperCase()} → ${dest.substr(0, 3).toUpperCase()}`,
-        depTime: `${Math.floor(Math.random() * 24).toString().padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
-        arrivalTime: `${Math.floor(Math.random() * 24).toString().padStart(2, '0')}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`,
-        duration: `${Math.floor(Math.random() * 5) + 1}h ${Math.floor(Math.random() * 60)}m`,
-        stops: Math.random() > 0.5 ? '1 stop' : 'non-stop',
-        additionalInfo: Math.random() > 0.8 ? 'In-flight meal not included' : 'No info'
-      };
-    };
-
-    for (let i = 0; i < pointCount * 0.4; i++) points.push(createPoint('normal', [25, 45], [25, 45]));
-    for (let i = 0; i < pointCount * 0.4; i++) points.push(createPoint('normal', [55, 75], [55, 75]));
-    for (let i = 0; i < noiseLevel; i++) points.push(createPoint('adversarial', [0, 100], [0, 100]));
-    
+    for (let i = 0; i < 60; i++) points.push({ id: `DN-${i}`, x: 25 + Math.random() * 20, y: 25 + Math.random() * 20, type: 'normal' });
+    for (let i = 0; i < 60; i++) points.push({ id: `DN-${i+100}`, x: 55 + Math.random() * 20, y: 55 + Math.random() * 20, type: 'normal' });
+    for (let i = 0; i < 15; i++) points.push({ id: `DA-${i}`, x: Math.random() * 100, y: Math.random() * 100, type: 'adversarial' });
     return points;
-  }, [pointCount, noiseLevel]);
+  }, [scanData]);
 
-  const adversarialPoints = generateData.filter(p => p.type === 'adversarial');
-  const normalPoints = generateData.filter(p => p.type === 'normal');
-  const totalCount = generateData.length;
-  const normalPct = ((normalPoints.length / totalCount) * 100).toFixed(1);
-  const adversarialPct = ((adversarialPoints.length / totalCount) * 100).toFixed(1);
+  const stats = useMemo(() => {
+    const total = displayData.length;
+    const attacks = displayData.filter(p => p.type === 'adversarial').length;
+    const safe = total - attacks;
+    const score = Math.round((safe / total) * 100);
+    return { total, attacks, safe, score };
+  }, [displayData]);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return displayData.slice(start, start + itemsPerPage);
+  }, [displayData, currentPage]);
+
+  const totalPages = Math.ceil(displayData.length / itemsPerPage);
 
   const handlePointClick = (data: any) => {
-    // Recharts Scatter onClick can pass a wrapper or the raw data depending on context
     const point = data?.payload || data;
     if (!point || !point.id) return;
-    
     setSelectedPoint(point);
-    // Focus on a window around the point. Using a 40-unit spread for safety.
-    setXDomain([point.x - 20, point.x + 20]);
-    setYDomain([point.y - 20, point.y + 20]);
+    setXDomain([point.x - 15, point.x + 15]);
+    setYDomain([point.y - 15, point.y + 15]);
   };
 
   const resetZoom = () => {
@@ -73,335 +56,310 @@ const Visualizer: React.FC = () => {
     setYDomain(undefined);
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload as DataPoint;
-      return (
-        <div className="glass-panel p-4 rounded-xl border-slate-700 shadow-2xl pointer-events-none min-w-[160px] animate-fade-in relative z-50">
-          <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Point Signature</p>
-          <p className="text-xs font-mono text-white mb-3 border-b border-slate-800 pb-2">{data.id}</p>
-          
-          <div className="space-y-1.5 mb-3 text-xs">
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-slate-500 uppercase font-bold tracking-tighter">Source</span>
-              <span className="text-slate-300 font-semibold">{data.source}</span>
-            </div>
-            <div className="flex justify-between items-center gap-4">
-              <span className="text-slate-500 uppercase font-bold tracking-tighter">Destination</span>
-              <span className="text-slate-300 font-semibold">{data.destination}</span>
-            </div>
-          </div>
+  const renderColumnAnalysis = () => {
+    const columns = [
+      {
+        name: 'airline',
+        icon: 'fa-plane',
+        type: 'categorical',
+        stats: { valid: stats.total, mismatched: 0, missing: 0, unique: 6, mostCommon: 'Jet Airways', frequency: '38%' },
+        distribution: [
+          { label: 'Jet Airways', value: 38 },
+          { label: 'IndiGo', value: 22 },
+          { label: 'Air India', value: 15 },
+          { label: 'Other', value: 25 },
+        ]
+      },
+      {
+        name: 'departure_time',
+        icon: 'fa-clock',
+        type: 'numeric',
+        stats: { valid: stats.total, mismatched: 0, missing: 0, mean: '14:22', stdDev: '4.2h', min: '00:05', q25: '09:15', q50: '15:30', q75: '19:45', max: '23:55' },
+        distribution: [
+          { label: '0-6', value: 10 },
+          { label: '6-12', value: 35 },
+          { label: '12-18', value: 30 },
+          { label: '18-24', value: 25 },
+        ]
+      },
+      {
+        name: 'status',
+        icon: 'fa-biohazard',
+        type: 'categorical',
+        stats: { valid: stats.total, mismatched: 0, missing: 0, unique: 2, mostCommon: 'Safe', frequency: `${stats.score}%` },
+        distribution: [
+          { label: 'Safe', value: stats.score },
+          { label: 'Attack', value: 100 - stats.score },
+        ]
+      }
+    ];
 
-          <div className={`text-[9px] px-2 py-1 rounded-md font-black uppercase tracking-widest text-center border ${
-            data.type === 'adversarial' 
-              ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' 
-              : 'bg-teal-500/10 text-teal-400 border-teal-500/30'
-          }`}>
-            {data.type === 'adversarial' ? <i className="fas fa-biohazard mr-1"></i> : <i className="fas fa-check mr-1"></i>}
-            {data.type}
-          </div>
+    return (
+      <div className="bg-[#0f172a] text-slate-200 rounded-b-3xl max-h-[600px] overflow-y-auto border-t border-slate-800">
+        <div className="px-10 py-4 flex justify-end sticky top-0 bg-[#0f172a] z-10 border-b border-slate-800/50">
+           <div className="text-[11px] font-bold text-slate-500 flex items-center gap-2 cursor-pointer hover:text-teal-400 transition-colors">
+             {columns.length} of 11 columns <i className="fas fa-chevron-down"></i>
+           </div>
         </div>
-      );
-    }
-    return null;
+        
+        <div className="divide-y divide-slate-800/50">
+          {columns.map((col, idx) => (
+            <div key={idx} className="p-10 animate-fade-in">
+              <div className="flex items-center gap-2 mb-8 text-slate-200">
+                <i className={`fas ${col.icon} text-teal-400 text-xs`}></i>
+                <h4 className="text-sm font-black tracking-tight">{col.name}</h4>
+              </div>
+
+              <div className="grid grid-cols-12 gap-10">
+                <div className="col-span-4 h-32 flex flex-col justify-end">
+                  <div className="flex items-end gap-1 h-full w-full">
+                    {col.distribution.map((d, i) => (
+                      <div key={i} className="group relative flex-1 flex flex-col justify-end">
+                        <div className="bg-teal-500/80 rounded-t-sm w-full transition-all duration-500 hover:bg-teal-400" style={{ height: `${d.value}%` }}></div>
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap">
+                          {d.label}: {d.value}%
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="col-span-3 space-y-4">
+                  <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-slate-800 mb-4 shadow-inner">
+                    <div className="bg-teal-500" style={{ width: '100%' }}></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-teal-500"></div> Valid</div>
+                      <div className="flex gap-4"><span>{col.stats.valid}</span> <span className="text-slate-500">100%</span></div>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-bold opacity-30">
+                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-600"></div> Mismatched</div>
+                      <div className="flex gap-4"><span>0</span> <span className="text-slate-500">0%</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-span-5 border-l border-slate-800/50 pl-10">
+                  {col.type === 'categorical' ? (
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span className="text-slate-500 uppercase tracking-widest">Unique</span>
+                        <span>{col.stats.unique}</span>
+                      </div>
+                      <div className="flex justify-between text-[11px] font-bold">
+                        <span className="text-slate-500 uppercase tracking-widest">Most Common</span>
+                        <div className="flex gap-2">
+                          <span className="max-w-[120px] truncate text-teal-400">{col.stats.mostCommon}</span>
+                          <span className="text-slate-500">{col.stats.frequency}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-x-12 gap-y-3">
+                       <div className="flex justify-between text-[11px] font-bold">
+                         <span className="text-slate-500 uppercase tracking-widest">Mean</span>
+                         <span>{col.stats.mean}</span>
+                       </div>
+                       <div className="flex justify-between text-[11px] font-bold">
+                         <span className="text-slate-500 uppercase tracking-widest">Quantiles</span>
+                         <div className="flex flex-col items-end text-[10px]">
+                            <div className="flex gap-4"><span>{col.stats.min}</span> <span className="text-slate-500 w-8 text-right">Min</span></div>
+                            <div className="flex gap-4"><span>{col.stats.q50}</span> <span className="text-slate-500 w-8 text-right">50%</span></div>
+                            <div className="flex gap-4"><span>{col.stats.max}</span> <span className="text-slate-500 w-8 text-right">Max</span></div>
+                         </div>
+                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  const renderCompactView = () => (
-    <div className="overflow-x-auto rounded-xl border border-slate-800 shadow-xl">
-      <table className="w-full text-left text-[11px] border-collapse bg-slate-900/40">
-        <thead>
-          <tr className="bg-slate-800/95 text-slate-200 border-b border-slate-700">
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Airline</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Date</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Source</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Dest</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Route</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider">Departure</th>
-            <th className="px-4 py-4 font-bold uppercase tracking-wider text-right">Status</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800/50">
-          {[...adversarialPoints.slice(0, 8), ...normalPoints.slice(0, 15)].map((item, idx) => (
-            <tr 
-              key={item.id} 
-              onClick={() => handlePointClick(item)}
-              className={`
-                transition-all cursor-pointer 
-                ${idx % 2 === 0 ? 'bg-slate-800/20' : 'bg-transparent'}
-                ${item.type === 'adversarial' ? 'bg-rose-500/10 hover:bg-rose-500/20' : 'hover:bg-slate-700/40'} 
-                ${selectedPoint?.id === item.id ? 'ring-2 ring-inset ring-teal-500 !bg-teal-500/10' : ''}
-              `}
-            >
-              <td className="px-4 py-3 text-slate-200 font-medium">{item.airline}</td>
-              <td className="px-4 py-3 text-slate-400">{item.dateOfJourney}</td>
-              <td className="px-4 py-3 text-slate-400">{item.source}</td>
-              <td className="px-4 py-3 text-slate-400">{item.destination}</td>
-              <td className="px-4 py-3 text-slate-500 font-mono text-[10px]">{item.route}</td>
-              <td className="px-4 py-3 text-slate-400">{item.depTime}</td>
-              <td className="px-4 py-3 text-right">
-                {item.type === 'adversarial' ? 
-                  <span className="text-rose-500 font-bold text-[11px] tracking-tight flex items-center justify-end gap-1.5 drop-shadow-[0_0_8px_rgba(244,63,94,0.3)]">
-                    <i className="fas fa-biohazard"></i> ATTACK
-                  </span> : 
-                  <span className="text-teal-400 font-bold text-[11px] tracking-tight flex items-center justify-end gap-1.5 drop-shadow-[0_0_8px_rgba(20,184,166,0.3)]">
-                    <i className="fas fa-shield-alt"></i> OK
-                  </span>
-                }
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-
   return (
-    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in pb-20">
-      <header className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="bg-teal-500/10 text-teal-400 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-500/20 uppercase tracking-widest">Analysis Module</span>
-              <h2 className="text-3xl font-bold text-white">Cluster Analysis Visualization</h2>
-            </div>
-            <p className="text-slate-400">Deep inspection of training data features using statistical distance modeling.</p>
+    <div className="p-8 max-w-7xl mx-auto space-y-8 animate-fade-in pb-24">
+      <header className="mb-2 flex justify-between items-center">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="bg-teal-500/10 text-teal-400 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-500/20 uppercase tracking-widest">Visual Forensic Analysis</span>
+            <h2 className="text-3xl font-bold text-white tracking-tight">Clustering & Anomaly Map</h2>
           </div>
-          {selectedPoint && (
-            <button 
-              onClick={resetZoom}
-              className="bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all border border-teal-500/30 flex items-center gap-2 shadow-lg shadow-teal-500/20"
-            >
-              <i className="fas fa-compress-arrows-alt"></i> Reset Viewport
-            </button>
-          )}
+          <p className="text-slate-400">Projecting high-dimensional features into Euclidean vector space.</p>
         </div>
+        {selectedPoint && (
+          <button onClick={resetZoom} className="bg-slate-800 hover:bg-slate-700 text-teal-400 text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 border border-slate-700 shadow-xl">
+            <i className="fas fa-compress-arrows-alt"></i> Reset Viewport
+          </button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="glass-panel p-6 rounded-2xl">
-            <h3 className="font-bold mb-4 text-teal-400 flex items-center gap-2">
-              <i className="fas fa-sliders-h"></i> Simulation Controls
-            </h3>
-            <div className="space-y-6">
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-xs text-slate-400 uppercase tracking-wider">Data Points</label>
-                  <span className="text-xs font-mono text-teal-400">{pointCount}</span>
-                </div>
-                <input type="range" min="50" max="500" value={pointCount} onChange={(e) => setPointCount(Number(e.target.value))} className="w-full accent-teal-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
-              </div>
-              <div>
-                <div className="flex justify-between mb-2">
-                  <label className="text-xs text-slate-400 uppercase tracking-wider">Attack Noise Level</label>
-                  <span className="text-xs font-mono text-rose-400">{noiseLevel}</span>
-                </div>
-                <input type="range" min="0" max="50" value={noiseLevel} onChange={(e) => setNoiseLevel(Number(e.target.value))} className="w-full accent-rose-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer" />
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel p-6 rounded-2xl bg-slate-800/20 space-y-6">
-            <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <i className="fas fa-chart-pie text-teal-400"></i> Composition Metrics
-            </h4>
-            
-            <div className="space-y-4">
-              <div>
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-xs font-bold text-teal-400">Normal Data</span>
-                  <span className="text-lg font-mono font-bold text-white">{normalPct}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-teal-500 transition-all duration-500 ease-out" style={{ width: `${normalPct}%` }}></div>
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between items-end mb-1">
-                  <span className="text-xs font-bold text-rose-500">Adversarial Data</span>
-                  <span className="text-lg font-mono font-bold text-white">{adversarialPct}%</span>
-                </div>
-                <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-rose-500 transition-all duration-500 ease-out" style={{ width: `${adversarialPct}%` }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-3 glass-panel p-8 rounded-2xl h-[450px] flex flex-col shadow-2xl relative overflow-hidden bg-slate-900/60">
-            <div className="flex-1 w-full relative z-10">
+        <div className="lg:col-span-3 space-y-8">
+          <div className="glass-panel p-8 rounded-3xl h-[500px] flex flex-col bg-slate-900/40 relative overflow-hidden border-slate-700/50 shadow-2xl">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-teal-500/30 to-transparent"></div>
+            <div className="flex-1 w-full z-10">
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis 
-                    type="number" 
-                    dataKey="x" 
-                    name="X-Feature" 
-                    stroke="#475569" 
-                    fontSize={10} 
-                    domain={xDomain || [0, 100]} 
+                  <XAxis type="number" dataKey="x" stroke="#94a3b8" fontSize={11} domain={xDomain || [0, 100]} tick={{fill: '#94a3b8'}}>
+                    <Label value="Feature Vector X" offset={-20} position="insideBottom" fill="#475569" fontSize={10} fontWeight="bold" />
+                  </XAxis>
+                  <YAxis type="number" dataKey="y" stroke="#94a3b8" fontSize={11} domain={yDomain || [0, 100]} tick={{fill: '#94a3b8'}}>
+                    <Label value="Feature Vector Y" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} fill="#475569" fontSize={10} fontWeight="bold" />
+                  </YAxis>
+                  <ZAxis type="number" dataKey="z" range={[80, 400]} />
+                  <Tooltip 
+                    cursor={{ strokeDasharray: '3 3', stroke: '#334155' }}
+                    itemStyle={{ color: '#ffffff' }}
+                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)' }}
                   />
-                  <YAxis 
-                    type="number" 
-                    dataKey="y" 
-                    name="Y-Feature" 
-                    stroke="#475569" 
-                    fontSize={10} 
-                    domain={yDomain || [0, 100]}
-                  />
-                  <ZAxis type="number" dataKey="z" range={[60, 300]} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Scatter 
-                    name="Data Points" 
-                    data={generateData} 
-                    onClick={handlePointClick}
-                    cursor="pointer"
-                  >
-                    {generateData.map((entry, index) => (
+                  <Scatter name="Data Point" data={displayData} onClick={handlePointClick}>
+                    {displayData.map((entry, index) => (
                       <Cell 
                         key={`${entry.id}-${index}`} 
                         fill={entry.type === 'normal' ? '#14b8a6' : '#f43f5e'} 
-                        strokeWidth={selectedPoint?.id === entry.id ? 2 : 0} 
-                        stroke="#ffffff"
-                        fillOpacity={selectedPoint ? (selectedPoint.id === entry.id ? 1 : 0.2) : 0.7}
-                        className="transition-all duration-300"
+                        fillOpacity={selectedPoint ? (selectedPoint.id === entry.id ? 1 : 0.1) : 0.6}
+                        stroke={entry.type === 'adversarial' ? '#f43f5e' : 'none'}
+                        strokeWidth={2}
+                        className="transition-all duration-300 cursor-pointer"
                       />
                     ))}
                   </Scatter>
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
-            <div className="absolute bottom-4 left-4 flex gap-4 z-20">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-teal-500"></div>
-                <span className="text-[10px] text-slate-500 uppercase font-bold">Normal</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-rose-500"></div>
-                <span className="text-[10px] text-slate-500 uppercase font-bold">Adversarial</span>
-              </div>
-            </div>
           </div>
+        </div>
 
-          <div className="md:col-span-1 glass-panel rounded-2xl overflow-hidden border-slate-700/50 flex flex-col min-h-[450px]">
-            <div className="p-4 border-b border-slate-700/50 bg-slate-800/40">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <i className="fas fa-info-circle text-teal-400"></i> Point Details
-              </h4>
-            </div>
+        <div className="lg:col-span-1">
+          <div className="glass-panel rounded-3xl p-6 bg-slate-800/10 border-slate-700/50 h-full flex flex-col shadow-xl">
+            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <i className="fas fa-fingerprint text-teal-400"></i> Vector Blueprint
+            </h4>
             
             {selectedPoint ? (
-              <div className="flex-1 p-5 space-y-5 animate-fade-in overflow-y-auto max-h-[400px]">
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">ID Signature</p>
+              <div className="space-y-6 animate-fade-in flex-1">
+                <div className="p-4 bg-slate-900/60 rounded-2xl border border-slate-700/50">
+                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Endpoint ID</p>
                   <p className="text-sm font-mono text-white break-all">{selectedPoint.id}</p>
                 </div>
-                
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/30">
-                    <p className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">X-Val</p>
-                    <p className="text-xs font-mono text-teal-400">{selectedPoint.x.toFixed(2)}</p>
+                  <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800">
+                    <p className="text-[9px] text-slate-500 uppercase font-black">Spatial X</p>
+                    <p className="text-lg text-teal-400 font-black font-mono">{selectedPoint.x.toFixed(2)}</p>
                   </div>
-                  <div className="p-2 bg-slate-800/50 rounded-lg border border-slate-700/30">
-                    <p className="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Y-Val</p>
-                    <p className="text-xs font-mono text-teal-400">{selectedPoint.y.toFixed(2)}</p>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Carrier</p>
-                  <p className="text-xs text-slate-200">{selectedPoint.airline}</p>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-500 font-bold uppercase">Route</span>
-                    <span className="text-slate-300">{selectedPoint.route}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className="text-slate-500 font-bold uppercase">Departure</span>
-                    <span className="text-slate-300 font-mono">{selectedPoint.depTime}</span>
+                  <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800">
+                    <p className="text-[9px] text-slate-500 uppercase font-black">Spatial Y</p>
+                    <p className="text-lg text-teal-400 font-black font-mono">{selectedPoint.y.toFixed(2)}</p>
                   </div>
                 </div>
-
-                <div className={`mt-auto p-3 rounded-xl border ${
-                  selectedPoint.type === 'adversarial' 
-                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' 
-                    : 'bg-teal-500/10 border-teal-500/20 text-teal-400'
-                }`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <i className={`fas ${selectedPoint.type === 'adversarial' ? 'fa-biohazard' : 'fa-shield-alt'} text-xs`}></i>
-                    <p className="text-[10px] font-bold uppercase">{selectedPoint.type} detection</p>
+                <div className={`p-5 rounded-2xl border ${selectedPoint.type === 'adversarial' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-teal-500/10 border-teal-500/20'}`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedPoint.type === 'adversarial' ? 'bg-rose-500/20 text-rose-500' : 'bg-teal-500/20 text-teal-400'}`}><i className={`fas ${selectedPoint.type === 'adversarial' ? 'fa-skull-crossbones' : 'fa-shield-check'}`}></i></div>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white">{selectedPoint.type} Record</p>
                   </div>
-                  <p className="text-[9px] leading-relaxed text-slate-400">
-                    {selectedPoint.type === 'adversarial' 
-                      ? 'Detected as out-of-distribution. Recommendation: Quarantine and flag.'
-                      : 'Verified as within safe bounds.'
-                    }
-                  </p>
                 </div>
-                
-                <button 
-                  onClick={resetZoom}
-                  className="w-full py-2 text-[10px] font-bold text-slate-500 uppercase hover:text-white transition-colors border-t border-slate-700/50 mt-4"
-                >
-                  Clear Selection
-                </button>
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-3">
-                <i className="fas fa-mouse-pointer text-2xl opacity-20"></i>
-                <p className="text-xs leading-relaxed">Select a data point to view forensics and detailed metadata.</p>
+              <div className="text-center py-20 flex-1 flex flex-col justify-center">
+                <i className="fas fa-crosshairs text-3xl text-slate-700 mb-4 animate-pulse"></i>
+                <p className="text-xs font-bold text-slate-600 uppercase tracking-widest">Select a coordinate to view its blueprint.</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      <div className="glass-panel rounded-3xl overflow-hidden shadow-2xl border-slate-700/50">
-        <div className="border-b border-slate-700/50 bg-slate-800/40 px-8 pt-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-slate-700 rounded-lg flex items-center justify-center text-slate-300">
-                <i className="fas fa-file-csv text-xl"></i>
-              </div>
-              <div>
-                <h3 className="font-bold text-white tracking-tight">IndianFlightData - Sheet1.csv</h3>
-                <div className="flex gap-4 mt-1">
-                  <span className="text-[10px] text-slate-500 uppercase flex items-center gap-1"><i className="fas fa-calendar"></i> May 2019</span>
-                  <span className="text-[10px] text-slate-500 uppercase flex items-center gap-1"><i className="fas fa-table"></i> 11 Columns</span>
-                </div>
+      {/* Analysis Overview Section */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {[
+          { label: 'Integrity Score', value: `${stats.score}%`, sub: 'Dataset Reliability', color: 'text-teal-400' },
+          { label: 'Total Samples', value: stats.total, sub: 'Mapped Points', color: 'text-blue-400' },
+          { label: 'Attacks Blocked', value: stats.attacks, sub: 'Poisoned Vectors', color: 'text-rose-500' },
+          { label: 'Verified Safe', value: stats.safe, sub: 'Standard Feature Set', color: 'text-emerald-400' },
+        ].map((item, i) => (
+          <div key={i} className="glass-panel p-6 rounded-3xl border-slate-700/30 bg-slate-900/20 flex flex-col justify-center items-center text-center">
+            <h5 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-2">{item.label}</h5>
+            <p className={`text-3xl font-black ${item.color} mb-1`}>{item.value}</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase">{item.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="glass-panel rounded-3xl overflow-hidden border-slate-700/50 bg-[#0f172a]/40 shadow-2xl">
+        <div className="px-10 py-8 border-b border-slate-800/60 bg-slate-900/20">
+          <div className="flex items-center gap-6 mb-8">
+            <div className="w-14 h-14 bg-slate-800 rounded-2xl flex items-center justify-center border border-slate-700 shadow-inner group">
+              <i className="fas fa-file-csv text-2xl text-slate-400 group-hover:text-teal-400 transition-colors"></i>
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-white tracking-tight mb-1">{fileName || 'IndianFlightData - Sheet1.csv'}</h3>
+              <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                <span className="flex items-center gap-1.5"><i className="fas fa-calendar-alt"></i> MAY 2019</span>
+                <span className="flex items-center gap-1.5"><i className="fas fa-table-columns"></i> 11 COLUMNS</span>
               </div>
             </div>
           </div>
           
-          <div className="flex gap-8">
-            {['Compact', 'Column'].map(tab => (
-              <button 
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-4 px-1 text-sm font-semibold transition-all border-b-2 ${activeTab === tab ? 'text-teal-400 border-teal-400' : 'text-slate-500 border-transparent hover:text-slate-300'}`}
-              >
-                {tab}
-              </button>
-            ))}
+          <div className="flex gap-8 border-b border-slate-800/80 -mb-8">
+            <button onClick={() => setActiveTab('compact')} className={`pb-3 text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'compact' ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}>
+              Compact {activeTab === 'compact' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-400 rounded-full"></div>}
+            </button>
+            <button onClick={() => setActiveTab('column')} className={`pb-3 text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'column' ? 'text-teal-400' : 'text-slate-500 hover:text-slate-300'}`}>
+              Column {activeTab === 'column' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-teal-400 rounded-full"></div>}
+            </button>
           </div>
         </div>
 
-        <div className="p-8 bg-[#0f172a]/40">
-          {activeTab === 'Compact' && renderCompactView()}
-          
-          <div className="mt-8 flex justify-between items-center text-[10px] text-slate-500 font-bold uppercase tracking-widest px-2">
-            <span>Analyzed {generateData.length} records</span>
-            <div className="flex gap-4">
-              <button className="hover:text-white transition-colors">Previous</button>
-              <button className="hover:text-white transition-colors">Next</button>
+        {activeTab === 'compact' ? (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/80 bg-slate-900/40">
+                    <th className="px-10 py-5">Airline</th>
+                    <th className="px-10 py-5">Date</th>
+                    <th className="px-10 py-5">Source</th>
+                    <th className="px-10 py-5">Dest</th>
+                    <th className="px-10 py-5 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/40">
+                  {paginatedData.map((point) => (
+                    <tr key={point.id} onClick={() => handlePointClick(point)} className={`hover:bg-teal-500/5 transition-colors cursor-pointer group ${selectedPoint?.id === point.id ? 'bg-teal-500/10' : ''}`}>
+                      <td className="px-10 py-5 text-xs font-bold text-slate-200">{point.airline || 'Jet Airways'}</td>
+                      <td className="px-10 py-5 text-xs text-slate-400">{point.dateOfJourney || '27/05/2019'}</td>
+                      <td className="px-10 py-5 text-xs text-slate-400">{point.source || 'Chennai'}</td>
+                      <td className="px-10 py-5 text-xs text-slate-400">{point.destination || 'Delhi'}</td>
+                      <td className="px-10 py-5 text-right">
+                        <div className={`inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${point.type === 'adversarial' ? 'text-rose-500' : 'text-teal-400'}`}>
+                          <i className={`fas ${point.type === 'adversarial' ? 'fa-biohazard' : 'fa-check-circle'}`}></i>
+                          {point.type === 'adversarial' ? 'Attack' : 'Safe'}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </div>
+            <div className="px-10 py-6 bg-slate-900/60 border-t border-slate-800 flex justify-between items-center">
+              <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Page {currentPage} of {totalPages}</p>
+              <div className="flex gap-2">
+                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => (
+                  <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold border transition-all ${currentPage === i + 1 ? 'bg-teal-500 text-slate-900 border-teal-500' : 'bg-slate-800 text-slate-500 border-slate-700 hover:text-white'}`}>
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          renderColumnAnalysis()
+        )}
       </div>
     </div>
   );

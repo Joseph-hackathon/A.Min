@@ -4,7 +4,6 @@ export interface DataPoint {
   y: number;
   type: 'normal' | 'adversarial';
   id: string;
-  // Extended metadata for Data Explorer
   airline?: string;
   dateOfJourney?: string;
   source?: string;
@@ -17,14 +16,24 @@ export interface DataPoint {
   additionalInfo?: string;
 }
 
-export interface AnalysisResult {
-  totalPoints: number;
-  detectedAnomalies: number;
-  confidence: number;
-  clusterStats: {
-    normalCount: number;
-    attackCount: number;
-  };
+export interface ScanResult {
+  fileName: string;
+  fileType: string;
+  threatsDetected: number;
+  dataPoints: DataPoint[];
+  summary: string;
+  timestamp: string;
+  safetyScore: number;
+}
+
+export interface HistoryItem {
+  id: string;
+  dataset: string;
+  type: string;
+  date: string;
+  status: string;
+  severity: 'High' | 'Medium' | 'Low';
+  threats: number;
 }
 
 export enum Page {
