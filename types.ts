@@ -17,6 +17,14 @@ export interface DataPoint {
   timestamp?: string;
 }
 
+export interface ConfluentConfig {
+  bootstrapServer: string;
+  apiKey: string;
+  apiSecret: string;
+  clusterId: string;
+  region: string;
+}
+
 export interface ScanResult {
   fileName: string;
   fileType: string;
@@ -27,6 +35,7 @@ export interface ScanResult {
   safetyScore: number;
   isLiveStream?: boolean;
   kafkaTopic?: string;
+  confluentConfig?: ConfluentConfig;
 }
 
 export interface HistoryItem {

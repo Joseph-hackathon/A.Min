@@ -18,7 +18,7 @@ const Overview: React.FC<OverviewProps> = ({ onStartScanning }) => {
             <img 
               src="https://www.vectorlogo.zone/logos/confluent/confluent-ar21.svg" 
               alt="Confluent" 
-              className="h-10 md:h-14 opacity-70 group-hover:opacity-100 transition-all filter brightness-200 contrast-150" 
+              className="h-10 md:h-14 opacity-70 group-hover:opacity-100 transition-all filter brightness-0 invert contrast-200" 
             />
           </div>
           <div className="h-8 w-px bg-slate-800"></div>

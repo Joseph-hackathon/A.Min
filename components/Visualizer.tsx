@@ -67,7 +67,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
           mean: '311501b', stdDev: '23208572b',
           min: '1.83m', q25: '1.75b', q50: '9.25b', q75: '16.1b', max: '172962268b' 
         },
-        distribution: [ { value: 100 } ] // Large block as in image
+        distribution: [ { value: 100 } ] 
       },
       {
         name: 'category',
@@ -115,7 +115,6 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
               </div>
 
               <div className="grid grid-cols-12 gap-12">
-                {/* Left: Visualization */}
                 <div className="col-span-4 flex flex-col justify-end">
                   {col.name === 'airline_id' ? (
                     <div className="w-full h-32 bg-[#007ba1] rounded-sm relative">
@@ -134,7 +133,6 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
                   )}
                 </div>
 
-                {/* Mid-Right: Validation Bars */}
                 <div className="col-span-3">
                   <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-slate-100 mb-6">
                     <div className="bg-[#1e7e34]" style={{ width: '100%' }}></div>
@@ -156,7 +154,6 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
                   </div>
                 </div>
 
-                {/* Right: Detailed Stats Table */}
                 <div className="col-span-5 border-l border-slate-100 pl-10">
                   {col.type === 'categorical' ? (
                     <div className="space-y-2">
@@ -213,7 +210,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
             <span className="bg-teal-500/10 text-teal-400 text-[10px] font-bold px-2 py-0.5 rounded border border-teal-500/20 uppercase tracking-widest">Visual Forensic Analysis</span>
             <h2 className="text-3xl font-bold text-white tracking-tight">Clustering & Anomaly Map</h2>
           </div>
-          <p className="text-slate-400">Projecting high-dimensional features into Euclidean vector space.</p>
+          <p className="text-slate-400">Projecting high-dimensional features from <span className="text-teal-400 font-mono">{fileName || 'Confluent Stream'}</span> into Euclidean vector space.</p>
         </div>
         {selectedPoint && (
           <button onClick={resetZoom} className="bg-slate-800 hover:bg-slate-700 text-teal-400 text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center gap-2 border border-slate-700 shadow-xl">
@@ -272,20 +269,36 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
                   <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2">Endpoint ID</p>
                   <p className="text-sm font-mono text-white break-all">{selectedPoint.id}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-                    <p className="text-[9px] text-slate-500 uppercase font-black">Spatial X</p>
-                    <p className="text-lg text-teal-400 font-black font-mono">{selectedPoint.x.toFixed(2)}</p>
-                  </div>
-                  <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800">
-                    <p className="text-[9px] text-slate-500 uppercase font-black">Spatial Y</p>
-                    <p className="text-lg text-teal-400 font-black font-mono">{selectedPoint.y.toFixed(2)}</p>
+                
+                <div className="space-y-4 p-4 bg-slate-900/40 rounded-2xl border border-slate-800">
+                  <p className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-3 border-b border-slate-800 pb-2">Telemetry Payload</p>
+                  <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                    <div>
+                      <p className="text-[8px] text-slate-600 uppercase font-black">Airline</p>
+                      <p className="text-[10px] text-slate-300 font-bold">{selectedPoint.airline || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-slate-600 uppercase font-black">Route</p>
+                      <p className="text-[10px] text-slate-300 font-bold">{selectedPoint.route || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-slate-600 uppercase font-black">Journey</p>
+                      <p className="text-[10px] text-slate-300 font-bold">{selectedPoint.dateOfJourney || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] text-slate-600 uppercase font-black">Timestamp</p>
+                      <p className="text-[8px] text-teal-500 font-mono truncate">{selectedPoint.timestamp?.split('T')[1] || '00:00:00Z'}</p>
+                    </div>
                   </div>
                 </div>
-                <div className={`p-5 rounded-2xl border ${selectedPoint.type === 'adversarial' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-teal-500/10 border-teal-500/20'}`}>
-                  <div className="flex items-center gap-3 mb-3">
+
+                <div className={`p-5 rounded-2xl border ${selectedPoint.type === 'adversarial' ? 'bg-rose-500/10 border-rose-500/20 shadow-[0_0_15px_rgba(244,63,94,0.1)]' : 'bg-teal-500/10 border-teal-500/20'}`}>
+                  <div className="flex items-center gap-3 mb-1">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${selectedPoint.type === 'adversarial' ? 'bg-rose-500/20 text-rose-500' : 'bg-teal-500/20 text-teal-400'}`}><i className={`fas ${selectedPoint.type === 'adversarial' ? 'fa-skull-crossbones' : 'fa-shield-check'}`}></i></div>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white">{selectedPoint.type} Record</p>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white">{selectedPoint.type} Record</p>
+                      <p className="text-[8px] text-slate-500 uppercase tracking-tighter">Status Verified</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -299,7 +312,6 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
         </div>
       </div>
 
-      {/* Analysis Overview Section */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: 'Integrity Score', value: `${stats.score}%`, sub: 'Dataset Reliability', color: 'text-teal-400' },
@@ -322,9 +334,9 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
               <i className="fas fa-file-csv text-2xl text-slate-400 group-hover:text-teal-400 transition-colors"></i>
             </div>
             <div>
-              <h3 className="text-xl font-black text-white tracking-tight mb-1">{fileName || 'IndianFlightData - Sheet1.csv'}</h3>
+              <h3 className="text-xl font-black text-white tracking-tight mb-1">{fileName || 'prod.flight_telemetry'}</h3>
               <div className="flex items-center gap-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                <span className="flex items-center gap-1.5"><i className="fas fa-calendar-alt"></i> MAY 2019</span>
+                <span className="flex items-center gap-1.5"><i className="fas fa-calendar-alt"></i> MAY 2024</span>
                 <span className="flex items-center gap-1.5"><i className="fas fa-table-columns"></i> 11 COLUMNS</span>
               </div>
             </div>
@@ -357,7 +369,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
                   {paginatedData.map((point) => (
                     <tr key={point.id} onClick={() => handlePointClick(point)} className={`hover:bg-teal-500/5 transition-colors cursor-pointer group ${selectedPoint?.id === point.id ? 'bg-teal-500/10' : ''}`}>
                       <td className="px-10 py-5 text-xs font-bold text-slate-200">{point.airline || 'Jet Airways'}</td>
-                      <td className="px-10 py-5 text-xs text-slate-400">{point.dateOfJourney || '27/05/2019'}</td>
+                      <td className="px-10 py-5 text-xs text-slate-400">{point.dateOfJourney || '27/05/2024'}</td>
                       <td className="px-10 py-5 text-xs text-slate-400">{point.source || 'Chennai'}</td>
                       <td className="px-10 py-5 text-xs text-slate-400">{point.destination || 'Delhi'}</td>
                       <td className="px-10 py-5 text-right">
