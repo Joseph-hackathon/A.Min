@@ -61,18 +61,18 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
       {
         name: 'airline_id',
         icon: 'fa-key',
-        type: 'numeric',
+        type: 'numeric' as const,
         stats: { 
           valid: stats.total, mismatched: 0, missing: 0, 
           mean: '311501b', stdDev: '23208572b',
           min: '1.83m', q25: '1.75b', q50: '9.25b', q75: '16.1b', max: '172962268b' 
         },
-        distribution: [ { value: 100 } ] 
+        distribution: [ { label: 'Total Unique', value: 100 } ] 
       },
       {
         name: 'category',
         icon: 'fa-font',
-        type: 'categorical',
+        type: 'categorical' as const,
         stats: { 
           valid: stats.total, mismatched: 0, missing: 0, 
           unique: 143, mostCommon: 'handphone_tablet', frequency: '5%' 
@@ -86,7 +86,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
       {
         name: 'security_status',
         icon: 'fa-shield-halved',
-        type: 'categorical',
+        type: 'categorical' as const,
         stats: { 
           valid: stats.total, mismatched: 0, missing: 0, 
           unique: 2, mostCommon: 'Safe', frequency: `${stats.score}%` 
