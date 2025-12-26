@@ -1,10 +1,12 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-
 export const getSecurityAnalysis = async (dataSummary: string) => {
   try {
+    // Lazy initialization inside the function to avoid top-level crashes 
+    // and ensure we use the current environment variable.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: `You are a high-level cybersecurity AI expert specializing in Adversarial Machine Learning and Real-time Data Streaming Security. 
@@ -27,6 +29,6 @@ export const getSecurityAnalysis = async (dataSummary: string) => {
     return response.text;
   } catch (error) {
     console.error("Gemini analysis error:", error);
-    return "An error occurred while generating the security analysis. Please try again later.";
+    return "An error occurred while generating the security analysis. Please ensure your API Key is correctly configured in Vercel environment variables.";
   }
 };
