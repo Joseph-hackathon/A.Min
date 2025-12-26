@@ -59,34 +59,38 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
   const renderColumnAnalysis = () => {
     const columns = [
       {
-        name: 'airline',
-        icon: 'fa-plane',
-        type: 'categorical',
-        stats: { valid: stats.total, mismatched: 0, missing: 0, unique: 6, mostCommon: 'Jet Airways', frequency: '38%' },
-        distribution: [
-          { label: 'Jet Airways', value: 38 },
-          { label: 'IndiGo', value: 22 },
-          { label: 'Air India', value: 15 },
-          { label: 'Other', value: 25 },
-        ]
-      },
-      {
-        name: 'departure_time',
-        icon: 'fa-clock',
+        name: 'airline_id',
+        icon: 'fa-key',
         type: 'numeric',
-        stats: { valid: stats.total, mismatched: 0, missing: 0, mean: '14:22', stdDev: '4.2h', min: '00:05', q25: '09:15', q50: '15:30', q75: '19:45', max: '23:55' },
+        stats: { 
+          valid: stats.total, mismatched: 0, missing: 0, 
+          mean: '311501b', stdDev: '23208572b',
+          min: '1.83m', q25: '1.75b', q50: '9.25b', q75: '16.1b', max: '172962268b' 
+        },
+        distribution: [ { value: 100 } ] // Large block as in image
+      },
+      {
+        name: 'category',
+        icon: 'fa-font',
+        type: 'categorical',
+        stats: { 
+          valid: stats.total, mismatched: 0, missing: 0, 
+          unique: 143, mostCommon: 'handphone_tablet', frequency: '5%' 
+        },
         distribution: [
-          { label: '0-6', value: 10 },
-          { label: '6-12', value: 35 },
-          { label: '12-18', value: 30 },
-          { label: '18-24', value: 25 },
+          { label: 'handphone_tablet', value: 5 },
+          { label: 'otomotif', value: 5 },
+          { label: 'Other (5007)', value: 90 },
         ]
       },
       {
-        name: 'status',
-        icon: 'fa-biohazard',
+        name: 'security_status',
+        icon: 'fa-shield-halved',
         type: 'categorical',
-        stats: { valid: stats.total, mismatched: 0, missing: 0, unique: 2, mostCommon: 'Safe', frequency: `${stats.score}%` },
+        stats: { 
+          valid: stats.total, mismatched: 0, missing: 0, 
+          unique: 2, mostCommon: 'Safe', frequency: `${stats.score}%` 
+        },
         distribution: [
           { label: 'Safe', value: stats.score },
           { label: 'Attack', value: 100 - stats.score },
@@ -95,78 +99,99 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
     ];
 
     return (
-      <div className="bg-[#0f172a] text-slate-200 rounded-b-3xl max-h-[600px] overflow-y-auto border-t border-slate-800">
-        <div className="px-10 py-4 flex justify-end sticky top-0 bg-[#0f172a] z-10 border-b border-slate-800/50">
-           <div className="text-[11px] font-bold text-slate-500 flex items-center gap-2 cursor-pointer hover:text-teal-400 transition-colors">
-             {columns.length} of 11 columns <i className="fas fa-chevron-down"></i>
+      <div className="bg-white text-slate-900 rounded-b-3xl max-h-[700px] overflow-y-auto">
+        <div className="px-10 py-4 flex justify-end sticky top-0 bg-white/90 backdrop-blur-sm z-10 border-b border-slate-100">
+           <div className="text-[11px] font-bold text-slate-500 flex items-center gap-2">
+             {columns.length} of 11 columns <i className="fas fa-chevron-down text-[8px]"></i>
            </div>
         </div>
         
-        <div className="divide-y divide-slate-800/50">
+        <div className="divide-y divide-slate-100">
           {columns.map((col, idx) => (
             <div key={idx} className="p-10 animate-fade-in">
-              <div className="flex items-center gap-2 mb-8 text-slate-200">
-                <i className={`fas ${col.icon} text-teal-400 text-xs`}></i>
-                <h4 className="text-sm font-black tracking-tight">{col.name}</h4>
+              <div className="flex items-center gap-2 mb-8">
+                <i className={`fas ${col.icon} text-slate-400 text-xs`}></i>
+                <h4 className="text-sm font-black tracking-tight text-slate-800">{col.name}</h4>
               </div>
 
-              <div className="grid grid-cols-12 gap-10">
-                <div className="col-span-4 h-32 flex flex-col justify-end">
-                  <div className="flex items-end gap-1 h-full w-full">
-                    {col.distribution.map((d, i) => (
-                      <div key={i} className="group relative flex-1 flex flex-col justify-end">
-                        <div className="bg-teal-500/80 rounded-t-sm w-full transition-all duration-500 hover:bg-teal-400" style={{ height: `${d.value}%` }}></div>
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-800 text-white text-[9px] px-1.5 py-0.5 rounded pointer-events-none whitespace-nowrap">
-                          {d.label}: {d.value}%
+              <div className="grid grid-cols-12 gap-12">
+                {/* Left: Visualization */}
+                <div className="col-span-4 flex flex-col justify-end">
+                  {col.name === 'airline_id' ? (
+                    <div className="w-full h-32 bg-[#007ba1] rounded-sm relative">
+                      <div className="absolute -bottom-5 left-0 text-[10px] text-slate-400 font-bold">1.83m</div>
+                      <div className="absolute -bottom-5 right-0 text-[10px] text-slate-400 font-bold text-right truncate max-w-[80px]">1729622684b</div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {col.distribution.map((d, i) => (
+                        <div key={i} className="flex items-center justify-between text-[11px] font-bold">
+                          <span className="text-slate-600">{d.label}</span>
+                          <span className="text-slate-900">{d.value}%</span>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="col-span-3 space-y-4">
-                  <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-slate-800 mb-4 shadow-inner">
-                    <div className="bg-teal-500" style={{ width: '100%' }}></div>
+                {/* Mid-Right: Validation Bars */}
+                <div className="col-span-3">
+                  <div className="w-full h-1.5 flex rounded-full overflow-hidden bg-slate-100 mb-6">
+                    <div className="bg-[#1e7e34]" style={{ width: '100%' }}></div>
                   </div>
+                  
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-[10px] font-bold">
-                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-teal-500"></div> Valid</div>
-                      <div className="flex gap-4"><span>{col.stats.valid}</span> <span className="text-slate-500">100%</span></div>
+                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-sm bg-[#1e7e34]"></div> Valid</div>
+                      <div className="flex gap-4"><span>{col.stats.valid}</span> <span className="text-slate-400">100%</span></div>
                     </div>
-                    <div className="flex justify-between items-center text-[10px] font-bold opacity-30">
-                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-600"></div> Mismatched</div>
-                      <div className="flex gap-4"><span>0</span> <span className="text-slate-500">0%</span></div>
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-sm bg-slate-300"></div> Mismatched</div>
+                      <div className="flex gap-4"><span>0</span> <span className="text-slate-400">0%</span></div>
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] font-bold">
+                      <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-sm bg-[#d9534f]"></div> Missing</div>
+                      <div className="flex gap-4"><span>0</span> <span className="text-slate-400">0%</span></div>
                     </div>
                   </div>
                 </div>
 
-                <div className="col-span-5 border-l border-slate-800/50 pl-10">
+                {/* Right: Detailed Stats Table */}
+                <div className="col-span-5 border-l border-slate-100 pl-10">
                   {col.type === 'categorical' ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-slate-500 uppercase tracking-widest">Unique</span>
-                        <span>{col.stats.unique}</span>
+                        <span className="text-slate-500">Unique</span>
+                        <span className="text-slate-900">{col.stats.unique}</span>
                       </div>
                       <div className="flex justify-between text-[11px] font-bold">
-                        <span className="text-slate-500 uppercase tracking-widest">Most Common</span>
+                        <span className="text-slate-500">Most Common</span>
                         <div className="flex gap-2">
-                          <span className="max-w-[120px] truncate text-teal-400">{col.stats.mostCommon}</span>
-                          <span className="text-slate-500">{col.stats.frequency}</span>
+                          <span className="text-slate-900">{col.stats.mostCommon}</span>
+                          <span className="text-slate-400">{col.stats.frequency}</span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-x-12 gap-y-3">
+                    <div className="grid grid-cols-1 gap-y-2">
                        <div className="flex justify-between text-[11px] font-bold">
-                         <span className="text-slate-500 uppercase tracking-widest">Mean</span>
-                         <span>{col.stats.mean}</span>
+                         <span className="text-slate-500">Mean</span>
+                         <span className="text-slate-900">{col.stats.mean}</span>
                        </div>
                        <div className="flex justify-between text-[11px] font-bold">
-                         <span className="text-slate-500 uppercase tracking-widest">Quantiles</span>
-                         <div className="flex flex-col items-end text-[10px]">
-                            <div className="flex gap-4"><span>{col.stats.min}</span> <span className="text-slate-500 w-8 text-right">Min</span></div>
-                            <div className="flex gap-4"><span>{col.stats.q50}</span> <span className="text-slate-500 w-8 text-right">50%</span></div>
-                            <div className="flex gap-4"><span>{col.stats.max}</span> <span className="text-slate-500 w-8 text-right">Max</span></div>
+                         <span className="text-slate-500">Std. Deviation</span>
+                         <span className="text-slate-900">{col.stats.stdDev}</span>
+                       </div>
+                       <div className="pt-2 border-t border-slate-50 mt-2">
+                         <div className="flex justify-between text-[11px] font-bold mb-2">
+                           <span className="text-slate-500">Quantiles</span>
+                           <div className="flex flex-col items-end gap-1">
+                              <div className="flex gap-6"><span>{col.stats.min}</span> <span className="text-slate-400 w-8 text-right">Min</span></div>
+                              <div className="flex gap-6"><span>{col.stats.q25}</span> <span className="text-slate-400 w-8 text-right">25%</span></div>
+                              <div className="flex gap-6"><span>{col.stats.q50}</span> <span className="text-slate-400 w-8 text-right">50%</span></div>
+                              <div className="flex gap-6"><span>{col.stats.q75}</span> <span className="text-slate-400 w-8 text-right">75%</span></div>
+                              <div className="flex gap-6"><span>{col.stats.max}</span> <span className="text-slate-400 w-8 text-right">Max</span></div>
+                           </div>
                          </div>
                        </div>
                     </div>
@@ -317,7 +342,7 @@ const Visualizer: React.FC<VisualizerProps> = ({ scanData, fileName }) => {
 
         {activeTab === 'compact' ? (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto min-h-[400px]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800/80 bg-slate-900/40">

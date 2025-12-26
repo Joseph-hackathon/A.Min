@@ -36,7 +36,7 @@ Threats Detected: ${latestScan?.threatsDetected || 0}
 ${analysis}
 
 ---
-(C) A.min Labs Adversarial Shield Protocol
+(C) A.Min Labs Adversarial Shield Protocol
     `;
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -69,7 +69,7 @@ ${analysis}
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Logo size="sm" />
-            <span className="text-[10px] text-teal-400 font-mono font-black uppercase tracking-[0.2em]">A.min Security Protocol</span>
+            <span className="text-[10px] text-teal-400 font-mono font-black uppercase tracking-[0.2em]">A.Min Security Protocol</span>
           </div>
           <h2 className="text-4xl font-black text-white mb-1 tracking-tight">Forensic Security Analysis</h2>
           <p className="text-slate-400 text-sm">Security audit for {latestScan?.fileName || "Baseline Profile"}.</p>

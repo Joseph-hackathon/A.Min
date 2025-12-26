@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout, 
       <div className="flex items-center gap-3 mb-10 px-2 cursor-pointer" onClick={() => setActivePage(Page.Overview)}>
         <Logo size="md" />
         <div>
-          <h1 className="font-bold text-lg tracking-tight">A.min</h1>
+          <h1 className="font-bold text-lg tracking-tight">A.Min</h1>
           <p className="text-[10px] text-teal-400 font-mono uppercase tracking-widest">Security System</p>
         </div>
       </div>
@@ -62,7 +62,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout, 
           
           <div className="pt-6 border-t border-slate-700/50">
             <div className="bg-slate-800/50 p-4 rounded-xl text-xs text-slate-400 text-center font-bold">
-              A.min Labs
+              A.Min Labs
             </div>
           </div>
         </div>

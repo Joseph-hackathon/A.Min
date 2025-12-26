@@ -31,7 +31,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, initialMode = 'login' }) => {
     }
     // Simulated blacklisted domain
     if (email.endsWith('@malicious.com')) {
-      setError("This domain has been blacklisted by A.min Global Intelligence.");
+      setError("This domain has been blacklisted by A.Min Global Intelligence.");
       return false;
     }
     return true;
@@ -67,7 +67,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, initialMode = 'login' }) => {
       <div className="w-full glass-panel p-10 rounded-3xl z-10 animate-fade-in shadow-2xl bg-slate-900/90 border-slate-700/50">
         <div className="flex flex-col items-center mb-8">
           <Logo size="lg" className="mb-4" />
-          <h1 className="text-3xl font-black tracking-tighter text-white">A.min</h1>
+          <h1 className="text-3xl font-black tracking-tighter text-white">A.Min</h1>
           <p className="text-teal-400 text-[10px] font-black tracking-[0.3em] uppercase mt-1">Advanced Security Protocol</p>
         </div>
 

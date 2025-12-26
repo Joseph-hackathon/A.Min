@@ -7,15 +7,17 @@ export const getSecurityAnalysis = async (dataSummary: string) => {
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
-      contents: `You are a high-level cybersecurity AI expert specializing in Adversarial Machine Learning. 
-      Analyze the following summary of a dataset scan result for the A.min security platform and provide professional insights on:
-      1. Potential attack vectors (Poisoning, Evasion, etc.)
-      2. Impact on model reliability
-      3. Recommended mitigation strategies based on the A.min security framework.
+      contents: `You are a high-level cybersecurity AI expert specializing in Adversarial Machine Learning and Real-time Data Streaming Security. 
+      Analyze the following summary of a dataset scan result for the A.min security platform, which is integrated with Confluent Cloud (Kafka/Flink).
       
-      Data Summary: ${dataSummary}
+      Focus your insights on:
+      1. Potential in-flight attack vectors (Poisoning via stream injection, Evasion, etc.)
+      2. How this impacts real-time model training or decision-making in the Kafka pipeline.
+      3. Recommended Flink SQL mitigation strategies or Streaming Agent adjustments to isolate these threats.
       
-      Please respond in professional English.`,
+      Context Summary: ${dataSummary}
+      
+      Please respond in professional English. Use Markdown formatting.`,
       config: {
         temperature: 0.7,
         topP: 0.95,

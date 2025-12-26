@@ -61,7 +61,7 @@ const Mission: React.FC = () => {
                 <div key={i} className={`h-12 rounded-lg ${i === 4 ? 'bg-teal-500 shadow-lg shadow-teal-500/50' : 'bg-slate-800'}`}></div>
               ))}
             </div>
-            <p className="text-center mt-6 text-[10px] font-mono text-teal-400 uppercase tracking-widest">A.min Cluster Validation Active</p>
+            <p className="text-center mt-6 text-[10px] font-mono text-teal-400 uppercase tracking-widest">A.Min Cluster Validation Active</p>
           </div>
         </div>
         <div className="space-y-6 order-1 md:order-2">
@@ -70,7 +70,7 @@ const Mission: React.FC = () => {
           </div>
           <h3 className="text-3xl font-bold text-white">Data Integrity as a Service</h3>
           <p className="text-slate-400 leading-relaxed">
-            A.min isn't just a scanner; it's an immune system for AI. By utilizing advanced K-Means clustering and statistical distance modeling, we isolate anomalies that standard filters miss. We ensure that the data you train on is exactly what you think it is.
+            A.Min isn't just a scanner; it's an immune system for AI. By utilizing advanced K-Means clustering and statistical distance modeling, we isolate anomalies that standard filters miss. We ensure that the data you train on is exactly what you think it is.
           </p>
           <ul className="space-y-3">
             {[
@@ -127,7 +127,7 @@ const Mission: React.FC = () => {
       {/* Footer Call to Action */}
       <section className="glass-panel p-12 rounded-[3rem] text-center border-teal-500/20 bg-gradient-to-br from-teal-500/5 to-transparent">
         <h3 className="text-2xl font-bold text-white mb-4">Ready to Secure Your Model?</h3>
-        <p className="text-slate-400 mb-8 max-w-xl mx-auto">Join the leading AI labs using A.min to ensure their future remains untampered.</p>
+        <p className="text-slate-400 mb-8 max-w-xl mx-auto">Join the leading AI labs using A.Min to ensure their future remains untampered.</p>
         <div className="flex justify-center gap-4">
           <button className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-teal-500/20">
             Start Scanning

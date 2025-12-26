@@ -14,6 +14,7 @@ export interface DataPoint {
   duration?: string;
   stops?: string;
   additionalInfo?: string;
+  timestamp?: string;
 }
 
 export interface ScanResult {
@@ -24,6 +25,8 @@ export interface ScanResult {
   summary: string;
   timestamp: string;
   safetyScore: number;
+  isLiveStream?: boolean;
+  kafkaTopic?: string;
 }
 
 export interface HistoryItem {
@@ -34,6 +37,7 @@ export interface HistoryItem {
   status: string;
   severity: 'High' | 'Medium' | 'Low';
   threats: number;
+  throughput?: string;
 }
 
 export enum Page {
