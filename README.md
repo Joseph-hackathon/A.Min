@@ -17,42 +17,42 @@ A.Min was born from the vision of moving beyond post-hoc validation. Instead of 
 
 A.Min defends real-time streaming data against adversarial attacks by combining Confluent Cloud and Google Cloud infrastructure.
 
-**Real-time Interception**
+- **Real-time Interception:**
 Continuously monitors large-scale data flowing into Kafka topics with near-zero latency.
 
-**Flink SQL Analysis**
+- **Flink SQL Analysis:**
 Uses Apache Flink to filter statistical anomalies in incoming vector data in real time.
 
-**Vector Visualization**
+- **Vector Visualization:**
 Projects high-dimensional feature vectors into a two-dimensional space to visualize shadow clusters and anomalies.
 
-**Gemini AI Forensics**
+- **Gemini AI Forensics:**
 Analyzes detected threat patterns using the Google Gemini 1.5 Pro model and automatically generates professional security reports for immediate response.
 
 ## How we built it
 
-**Frontend**
+- **Frontend:**
 Built with React 19, Vite, and Tailwind CSS to deliver a high-fidelity cybersecurity-themed UI and UX.
 
-**Data Visualization**
+- **Data Visualization:**
 Implemented real-time cluster maps using Recharts to render thousands of data points efficiently.
 
-**Cloud Infrastructure**
+- **Cloud Infrastructure:**
 Confluent Cloud enables real-time data pipelines through Kafka and Flink SQL.
 Google Cloud Platform hosts the infrastructure and provides access to state-of-the-art AI models.
 
-**AI Integration**
+- **AI Integration:**
 Integrated the Gemini API via the @google/genai SDK to build a threat analysis engine based on streaming metadata.
 
 ## How we used Google Cloud
 
-**Gemini 3 Pro Preview**
+- **Gemini 3 Pro Preview:**
 Generates intelligent forensic reports for detected security threats by converting complex numerical logs into human-readable strategic security insights.
 
-**Scalable Infrastructure**
+- **Scalable Infrastructure:**
 Uses Google Cloud regions to reliably process globally distributed real-time data streams.
 
-**Security and Authentication**
+- **Security and Authentication:**
 Maintains system integrity through encrypted API communication and environment variable management following Google Cloud security best practices.
 
 ## Challenges we ran into
@@ -72,13 +72,13 @@ We also gained valuable experience designing an end-to-end real-time security ar
 
 ## What's next for A.Min
 
-**Self-Healing Streams**
+- **Self-Healing Streams:**
 Automatically isolate compromised partitions and cleanse poisoned data through automated pipelines.
 
-**Multi-modal Defense**
+- **Multi-modal Defense:**
 Extend adversarial detection beyond text and numerical data to include image and audio streams.
 
-**Hybrid Cloud Support**
+- **Hybrid Cloud Support:**
 Strengthen hybrid connectors to support both on-premise and cloud environments.
 
 ## License
