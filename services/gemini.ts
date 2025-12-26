@@ -3,9 +3,15 @@ import { GoogleGenAI } from "@google/genai";
 
 export const getSecurityAnalysis = async (dataSummary: string) => {
   try {
-    // Lazy initialization inside the function to avoid top-level crashes 
-    // and ensure we use the current environment variable.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      // Gracefully handle missing API key without crashing the app
+      console.warn("Gemini API key is not configured in environment variables.");
+      return "Security analysis is currently unavailable. Please configure the API_KEY in Vercel settings.";
+    }
+
+    // Initialize inside the function to ensure the app doesn't crash on load
+    const ai = new GoogleGenAI({ apiKey });
     
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
@@ -29,6 +35,6 @@ export const getSecurityAnalysis = async (dataSummary: string) => {
     return response.text;
   } catch (error) {
     console.error("Gemini analysis error:", error);
-    return "An error occurred while generating the security analysis. Please ensure your API Key is correctly configured in Vercel environment variables.";
+    return "An error occurred while generating the security analysis. Please check your network and API key status.";
   }
 };
