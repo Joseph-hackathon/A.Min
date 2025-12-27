@@ -31,6 +31,37 @@ Analyzes detected threat patterns using the Google Gemini 1.5 Pro model and auto
 
 ## How we built it
 
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Producer as Data Producer
+    participant Kafka as Confluent Cloud Kafka
+    participant Flink as Flink SQL (Real-time Filter)
+    participant Detector as A.Min Detector<br/>(Clustering + Distance)
+    participant Viz as A.Min Dashboard<br/>(React + Recharts)
+    participant Gemini as Gemini API<br/>(Gemini 3 Pro Preview)
+    participant Report as Forensic Report Store
+    actor Analyst as Security Analyst
+
+    Producer->>Kafka: Publish streaming events<br/>(feature vectors, telemetry)
+    Kafka->>Flink: Stream topic data
+    Flink->>Detector: Compute anomaly signals<br/>(distance, cluster deviation)
+    Detector-->>Flink: Return risk score + labels<br/>(normal, suspicious)
+
+    alt Normal stream
+        Flink-->>Kafka: Continue pipeline<br/>(no action)
+        Flink->>Viz: Send metrics and cluster stats
+    else Suspicious or Poisoning suspected
+        Flink->>Viz: Push alert + suspicious points
+        Flink->>Gemini: Send metadata + anomaly summary<br/>(cluster drift, distances, samples)
+        Gemini->>Gemini: Threat reasoning and classification<br/>(poisoning, evasion, risk)
+        Gemini-->>Report: Generate AI-synthesized forensic report
+        Report-->>Viz: Report link + summary
+        Viz-->>Analyst: Alert dashboard with evidence<br/>and recommended actions
+        Analyst->>Viz: Triage and confirm incident
+    end
+```
+
 - **Frontend:**
 Built with React 19, Vite, and Tailwind CSS to deliver a high-fidelity cybersecurity-themed UI and UX.
 
